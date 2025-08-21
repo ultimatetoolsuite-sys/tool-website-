@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Converter | Multi‑Tool</title>
+  <style>
+    :root{
+      --blue: #1e90ff; /* bright blue */
+      --blue-600:#1177e0;
+      --blue-700:#0d5db4;
+      --bg:#ffffff;
+      --fg:#0f172a; /* slate-900 */
+      --muted:#64748b; /* slate-500 */
+      --ring: rgba(30,144,255,.25);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
+      color:var(--fg);
+      background:linear-gradient(180deg,#f8fbff, #ffffff 35%);
+    }
+    .container{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px clamp(16px,4vw,28px) 40px;
+    }
+    header{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    }
+    .brand{
+      display:flex;align-items:center;gap:12px;
+    }
+    .logo{
+      width:42px;height:42px;border-radius:12px;
+      background: radial-gradient(120% 120% at 30% 20%, #74b8ff 0%, var(--blue) 45%, var(--blue-700) 100%);
+      box-shadow: 0 6px 20px rgba(17,119,224,.35), inset 0 0 0 1px rgba(255,255,255,.35);
+    }
+    h1{font-size: clamp(1.25rem, 1rem + 1.4vw, 2rem); margin:0}
+    .sub{color:var(--muted);font-size:.95rem}
+
+    .card{background:#fff;border:1px solid #e9eef6;border-radius:18px;box-shadow:0 10px 25px rgba(17,119,224,.08);overflow:hidden}
+
+    .grid{display:grid;gap:18px}
+    @media (min-width: 880px){
+      .grid{grid-template-columns: 1.15fr .85fr}
+    }
+
+    .section{padding:18px}
+    .section.head{
+      background: linear-gradient(180deg,#e9f4ff,#ffffff);
+      border-bottom: 1px solid #e6eef9;
+      padding:20px 18px;
+    }
+
+    .dropzone{
+      display:flex;align-items:center;justify-content:center;text-align:center;
+      border:2px dashed #cfe5ff;border-radius:16px;padding:26px;min-height:240px;
+      background:linear-gradient(180deg,#ffffff, #f3f9ff);
+      transition:.2s ease;
+    }
+    .dropzone.dragover{border-color:var(--blue);box-shadow:0 0 0 6px var(--ring)}
+    .dropzone input{display:none}
+    .dz-inner{max-width:520px}
+    .dz-title{font-weight:700;font-size:1.05rem;margin-bottom:6px}
+    .dz-sub{color:var(--muted);font-size:.95rem}
+    .btn{
+      appearance:none;border:0;border-radius:14px;padding:12px 16px;font-weight:700;cursor:pointer;
+      background:var(--blue);color:#fff;box-shadow:0 8px 20px rgba(17,119,224,.35);
+      transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .btn:hover{background:var(--blue-600)}
+    .btn:active{transform:translateY(1px); box-shadow:0 6px 14px rgba(17,119,224,.3)}
+
+    .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+    .select, .range, .number, .text{
+      width:100%;
+      border-radius:12px;border:1px solid #dce8f7;padding:12px 12px;font-weight:600;color:#0b2542;
+      background:#fff;outline:none;transition:.15s ease;box-shadow:0 1px 0 #f2f6fc;
+    }
+    .select:focus, .range:focus, .number:focus{box-shadow:0 0 0 5px var(--ring);border-color:var(--blue)}
+
+    .label{font-size:.85rem;color:var(--muted);font-weight:700;margin:4px 0 6px}
+
+    .options{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+    @media (max-width:540px){.options{grid-template-columns:1fr}}
+
+    .thumb{
+      width:100%;border-radius:14px;border:1px solid #e5eefb;overflow:hidden;background:#fff
+    }
+    .thumb img{display:block;width:100%;height:auto}
+
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;font-size:.88rem;color:#0b2542}
+    .meta div{background:#f6faff;border:1px solid #e8f1fd;border-radius:12px;padding:10px 12px}
+
+    .muted{color:var(--muted)}
+    .footer-note{font-size:.85rem;color:var(--muted)}
+    .hidden{display:none}
+
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;background:#eef6ff;border:1px solid #d8e9ff;color:#0b2542;
+      padding:8px 12px;border-radius:999px;font-weight:700;font-size:.85rem
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Image Converter</h1>
+          <div class="sub">Bright blue & white • Fast, simple, mobile‑friendly</div>
+        </div>
+      </div>
+      <button id="resetBtn" class="btn" type="button" aria-label="Reset tool">Reset</button>
+    </header>
+
+    <div class="card" role="region" aria-label="Image converter">
+      <div class="section head">
+        <div class="actions" style="gap:16px;justify-content:space-between">
+          <div class="pill"><span>①</span>Select • <span>②</span>Preview • <span>③</span>Convert</div>
+          <label class="btn" for="fileInput">Upload Image</label>
+          <input id="fileInput" type="file" accept="image/*" aria-label="Upload image" />
+        </div>
+      </div>
+
+      <div class="section grid">
+        <!-- Left: Dropzone & Preview -->
+        <div>
+          <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Drop files here or click to upload">
+            <input id="dzInput" type="file" accept="image/*" />
+            <div class="dz-inner">
+              <div class="dz-title">Drag & Drop your image here</div>
+              <div class="dz-sub">or click the <strong>Upload Image</strong> button above</div>
+              <div class="footer-note" style="margin-top:10px">PNG, JPG, JPEG, WEBP, BMP, GIF (first frame)</div>
+            </div>
+          </div>
+
+          <div id="previewWrap" class="thumb hidden" aria-live="polite" aria-atomic="true" style="margin-top:14px">
+            <img id="preview" alt="Image preview" />
+          </div>
+
+          <div id="meta" class="meta hidden">
+            <div id="fileName">File: –</div>
+            <div id="fileSize">Size: –</div>
+          </div>
+        </div>
+
+        <!-- Right: Options & Actions -->
+        <div>
+          <div class="options">
+            <div>
+              <div class="label">Output format</div>
+              <select id="format" class="select" aria-label="Choose output format">
+                <option value="image/jpeg">JPEG (.jpg)</option>
+                <option value="image/png">PNG (.png)</option>
+                <option value="image/webp">WEBP (.webp)</option>
+                <option value="image/bmp">BMP (.bmp)</option>
+              </select>
+            </div>
+            <div id="qualityGroup">
+              <div class="label">Quality (lossy formats)</div>
+              <input id="quality" class="range" type="range" min="40" max="100" value="85" />
+              <div class="sub">Current: <strong id="qVal">85</strong>%</div>
+            </div>
+            <div>
+              <div class="label">Max Width (px)</div>
+              <input id="maxW" class="number" type="number" min="1" placeholder="Leave empty for original" />
+            </div>
+            <div>
+              <div class="label">Max Height (px)</div>
+              <input id="maxH" class="number" type="number" min="1" placeholder="Leave empty for original" />
+            </div>
+          </div>
+
+          <div style="height:12px"></div>
+          <button id="convertBtn" class="btn" type="button">Convert & Download</button>
+          <div id="resultInfo" class="sub" style="margin-top:10px"></div>
+          <div class="footer-note" style="margin-top:12px">
+            Tip: Use <strong>WEBP</strong> or <strong>JPEG</strong> with lower quality for smaller files. PNG & BMP are lossless.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer style="margin-top:22px;text-align:center" class="muted">
+      Works offline in modern browsers. Your images never leave your device.
+    </footer>
+  </div>
+
+  <canvas id="canvas" class="hidden" aria-hidden="true"></canvas>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const dzInput = document.getElementById('dzInput');
+    const dropzone = document.getElementById('dropzone');
+    const previewWrap = document.getElementById('previewWrap');
+    const previewEl = document.getElementById('preview');
+    const meta = document.getElementById('meta');
+    const fileNameEl = document.getElementById('fileName');
+    const fileSizeEl = document.getElementById('fileSize');
+    const formatEl = document.getElementById('format');
+    const qualityGroup = document.getElementById('qualityGroup');
+    const qualityEl = document.getElementById('quality');
+    const qVal = document.getElementById('qVal');
+    const convertBtn = document.getElementById('convertBtn');
+    const resultInfo = document.getElementById('resultInfo');
+    const resetBtn = document.getElementById('resetBtn');
+    const maxW = document.getElementById('maxW');
+    const maxH = document.getElementById('maxH');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let currentFile = null;
+    let imageBitmap = null;
+
+    // Helpers
+    const bytesToNice = (b)=>{
+      if(!b && b!==0) return '–';
+      const units=['B','KB','MB','GB'];
+      let i=0, n=b; while(n>=1024 && i<units.length-1){n/=1024;i++}
+      return n.toFixed(n<10 && i>0?2:0)+" "+units[i];
+    };
+
+    function setQualityVisibility(){
+      const f = formatEl.value;
+      // Show quality only for lossy formats
+      const lossy = (f === 'image/jpeg' || f === 'image/webp');
+      qualityGroup.style.display = lossy ? 'block' : 'none';
+    }
+
+    setQualityVisibility();
+
+    qualityEl.addEventListener('input',()=>{ qVal.textContent = qualityEl.value; });
+    formatEl.addEventListener('change', setQualityVisibility);
+
+    // File selection wiring
+    fileInput.addEventListener('change', e=> handleFiles(e.target.files));
+    dzInput.addEventListener('change', e=> handleFiles(e.target.files));
+
+    // Drag & drop
+    ['dragenter','dragover'].forEach(ev=>{
+      dropzone.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); dropzone.classList.add('dragover'); });
+    });
+    ['dragleave','drop'].forEach(ev=>{
+      dropzone.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); dropzone.classList.remove('dragover'); });
+    });
+    dropzone.addEventListener('drop', e=>{
+      const dt = e.dataTransfer;
+      if(dt && dt.files && dt.files[0]) handleFiles(dt.files);
+    });
+    dropzone.addEventListener('click', ()=> dzInput.click());
+
+    async function handleFiles(files){
+      const file = files && files[0];
+      if(!file) return;
+      currentFile = file;
+
+      // Create object URL and preview
+      const url = URL.createObjectURL(file);
+      previewEl.src = url;
+      previewEl.onload = () => URL.revokeObjectURL(url);
+      previewWrap.classList.remove('hidden');
+      meta.classList.remove('hidden');
+      fileNameEl.textContent = 'File: ' + file.name;
+      fileSizeEl.textContent = 'Size: ' + bytesToNice(file.size);
+      resultInfo.textContent = '';
+
+      // Prepare ImageBitmap for fast canvas draw (handles GIF first frame)
+      imageBitmap = await createImageBitmap(file).catch(async ()=>{
+        // Fallback for older browsers
+        return new Promise((res,rej)=>{
+          const img = new Image();
+          img.onload=()=>res(img);
+          img.onerror=rej;
+          img.src = url;
+        });
+      });
+    }
+
+    function computeTargetSize(origW, origH){
+      const mw = parseInt(maxW.value, 10);
+      const mh = parseInt(maxH.value, 10);
+      if(!mw && !mh) return {w: origW, h: origH};
+      let w = origW, h = origH;
+      if(mw && mh){
+        const r = Math.min(mw / origW, mh / origH);
+        w = Math.max(1, Math.floor(origW * r));
+        h = Math.max(1, Math.floor(origH * r));
+      } else if(mw){
+        const r = mw / origW; w = mw; h = Math.max(1, Math.floor(origH * r));
+      } else if(mh){
+        const r = mh / origH; h = mh; w = Math.max(1, Math.floor(origW * r));
+      }
+      return {w, h};
+    }
+
+    async function convert(){
+      if(!imageBitmap){
+        alert('Please upload an image first.');
+        return;
+      }
+      const format = formatEl.value;
+      const quality = parseInt(qualityEl.value, 10) / 100;
+
+      const {width: ow, height: oh} = imageBitmap;
+      const {w, h} = computeTargetSize(ow, oh);
+      canvas.width = w; canvas.height = h;
+
+      // Clear & draw
+      ctx.clearRect(0,0,w,h);
+      ctx.drawImage(imageBitmap, 0, 0, w, h);
+
+      const useQuality = (format === 'image/jpeg' || format === 'image/webp') ? quality : undefined;
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, format, useQuality));
+      if(!blob){
+        alert('Conversion failed in this browser for the selected format.');
+        return;
+      }
+
+      const extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/bmp': 'bmp' };
+      const ext = extMap[format] || 'img';
+      const baseName = (currentFile?.name || 'image').replace(/\.[^.]+$/,'');
+      const outName = `${baseName}.${ext}`;
+
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href; a.download = outName; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(href), 2000);
+
+      resultInfo.textContent = `Converted → ${outName} (${bytesToNice(blob.size)})`;
+    }
+
+    convertBtn.addEventListener('click', convert);
+
+    resetBtn.addEventListener('click', ()=>{
+      currentFile = null; imageBitmap = null; previewEl.removeAttribute('src');
+      previewWrap.classList.add('hidden'); meta.classList.add('hidden');
+      fileInput.value = ''; dzInput.value = ''; resultInfo.textContent = '';
+      maxW.value = ''; maxH.value = ''; qualityEl.value = 85; qVal.textContent = '85';
+      formatEl.value = 'image/jpeg'; setQualityVisibility();
+    });
+  </script>
+</body>
+</html>
